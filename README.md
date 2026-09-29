@@ -1,62 +1,79 @@
 # Les Délices de CANA
 
-Application PWA de restaurant avec menu du jour, réservations publiques, suivi/annulation par téléphone et espace d'administration.
+Application web/PWA du restaurant **Les Délices de CANA**.
 
-## Architecture
+## Public
+La partie publique est volontairement simple :
+1. **Hero**
+2. **Catalogue / carte** façon boutique e-commerce
+3. **Réservation**
+4. Suivi de réservation dans une fenêtre privée
 
-- Frontend : React + Vite + PWA.
-- Déploiement : Vercel.
-- API : Vercel Functions dans `api/`.
-- Données persistantes : Vercel Blob **privé**, un objet JSON par réservation, plat, menu et abonnement push.
-- Notifications : Web Push avec VAPID.
-- Authentification admin : session HTTP-only signée côté serveur.
-- **Aucune dépendance à Supabase.**
+Aucune mention technique, aucune section d’administration et aucun lien public vers le back-office.
 
-Vercel Blob privé est utilisé comme stockage persistant léger pour ce restaurant. Les fonctions Vercel peuvent lire/écrire ce stockage sans serveur à administrer.
+## Back-office privé
+Le seul chemin d'administration est :
 
-## Configuration Vercel
+`/me`
 
-1. Importer le dépôt `AgriCapital-Web/Les-D-lices-de-CANA` dans Vercel.
-2. Framework : Vite. Build command : `npm run build`. Output : `dist`.
-3. Créer et connecter un **Private Blob Store** au projet.
-4. Renseigner les variables d'environnement :
+Donc, sur le domaine de production :
 
-```env
-ADMIN_PHONE=0700000000
-ADMIN_PASSWORD=un-mot-de-passe-fort
-SESSION_SECRET=une-valeur-longue-et-aleatoire
-VAPID_PUBLIC_KEY=...
-VAPID_PRIVATE_KEY=...
-VAPID_SUBJECT=mailto:contact@lesdelicesdecana.ci
-VITE_VAPID_PUBLIC_KEY=...
+`https://lesdelicesdecana.online/me`
+
+Le chemin `/admin` n'est pas utilisé par l'application.
+
+Le back-office permet :
+- consulter les réservations ;
+- programmer les menus par date et heure ;
+- modifier les plats ;
+- créer des plats ;
+- modifier les prix, descriptions et catégories ;
+- remplacer les images ;
+- ajouter/retirer les plats d'un menu ;
+- préparer plusieurs menus à l'avance.
+
+## Catalogue
+Le projet contient un catalogue de démonstration pour donner immédiatement un aperçu réaliste.
+
+La base Supabase contient également le seed du catalogue et du menu du jour. Les menus programmés deviennent visibles automatiquement lorsque leur date et leur heure de publication sont atteintes.
+
+Heure de publication par défaut : **06h00 — heure Côte d'Ivoire (UTC)**.
+
+## Images
+Les images de plats sont stockées dans le bucket public Supabase `menu-images`. L'équipe peut charger une nouvelle photo depuis `/me` et l'associer au plat.
+
+## Identité
+Le logo transparent CANA est centralisé dans :
+
+`public/brand/cana-logo.svg`
+
+Il est utilisé pour :
+- en-tête ;
+- hero ;
+- footer ;
+- écran de connexion privé ;
+- PWA ;
+- notifications ;
+- favicon ;
+- Open Graph.
+
+La palette de l'interface reste claire : ivoire, crème, brun, cuivre et or. Aucun fond noir n'est utilisé comme fond de page.
+
+## Base de données
+Exécuter `supabase/schema.sql` dans le projet Supabase.
+
+Après création du compte Auth de l'équipe, ajouter son UUID dans `public.staff` pour lui donner les droits du back-office.
+
+## Développement
+```bash
+npm install
+npm run dev
 ```
 
-Pour les stores Vercel Blob récents, l'authentification OIDC peut être activée automatiquement par Vercel. Les anciens stores peuvent utiliser `BLOB_READ_WRITE_TOKEN`.
+Variables :
 
-## Notifications push
-
-Générer une paire VAPID une seule fois avec `npx web-push generate-vapid-keys`, puis placer la clé publique dans `VITE_VAPID_PUBLIC_KEY` et dans `VAPID_PUBLIC_KEY`, et la clé privée dans `VAPID_PRIVATE_KEY`.
-
-Le compte administrateur doit autoriser les notifications depuis `/admin`. Lorsqu'une réservation arrive, l'API envoie une notification push aux abonnements enregistrés.
-
-## Fonctionnement
-
-### Public
-
-- Le menu affiché est uniquement celui du jour et dont l'heure de publication est atteinte.
-- Une réservation crée immédiatement un enregistrement `pending` persistant.
-- Le client peut retrouver ses réservations avec son numéro de téléphone.
-- Une réservation `pending` ou `confirmed` peut être annulée par le client.
-
-### Administration
-
-- Connexion par téléphone + mot de passe configurés dans Vercel.
-- Consultation et changement de statut des réservations.
-- Création des plats.
-- Programmation d'un menu.
-- Ajout des plats au menu.
-- Abonnement aux notifications push.
-
-## Important
-
-Aucun plat de démonstration ni fausse réservation n'est injecté en production. La base initiale est vide et doit être alimentée depuis l'administration.
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_VAPID_PUBLIC_KEY=
+```
