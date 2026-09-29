@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       includeAssets: ['logo.svg'],
       manifest: {
@@ -17,12 +20,9 @@ export default defineConfig({
         display: 'standalone',
         lang: 'fr',
         start_url: '/',
-        icons: [
-          { src: '/logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
-        ]
+        icons: [{ src: '/logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }]
       },
-      workbox: {
-        navigateFallback: '/',
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}']
       }
     })
