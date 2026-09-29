@@ -22,7 +22,7 @@ function App(){
   useEffect(()=>{const h=e=>{e.preventDefault();setInstallPrompt(e)};window.addEventListener('beforeinstallprompt',h);loadMenu();return()=>window.removeEventListener('beforeinstallprompt',h)},[]);
   async function loadMenu(){
     if(!supabase)return;
-    const {data,error}=await supabase.from('menu_items').select('id,dish_id,name,description,price,image_url,menus!inner(service_date,publish_at,status)').eq('menus.service_date',todayISO()).eq('menus.status','published').lte('menus.publish_at',new Date().toISOString()).order('position');
+    const {data,error}=await supabase.from('menu_items').select('id,dish_id,name,description,price,image_url,menus!inner(service_date,publish_at,status)').eq('menus.service_date',todayISO()).in('menus.status',['scheduled','published']).lte('menus.publish_at',new Date().toISOString()).order('position');
     if(!error&&data?.length)setMenu(data.map(x=>({id:x.id,dishId:x.dish_id,name:x.name,description:x.description,price:x.price,image:x.image_url})));
   }
   async function submitReservation(e){
