@@ -63,8 +63,8 @@ alter table public.menu_items enable row level security;
 alter table public.reservations enable row level security;
 
 create policy "public read active dishes" on public.dishes for select using (active = true);
-create policy "public read published menus" on public.menus for select using (status='published' and publish_at <= now());
-create policy "public read published menu items" on public.menu_items for select using (exists (select 1 from public.menus m where m.id=menu_id and m.status='published' and m.publish_at <= now()));
+create policy "public read published menus" on public.menus for select using (status in ('scheduled','published') and publish_at <= now());
+create policy "public read published menu items" on public.menu_items for select using (exists (select 1 from public.menus m where m.id=menu_id and m.status in ('scheduled','published') and m.publish_at <= now()));
 
 create or replace function public.create_public_reservation(
   p_full_name text,
