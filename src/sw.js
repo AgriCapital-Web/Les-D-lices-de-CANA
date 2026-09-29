@@ -8,8 +8,8 @@ self.addEventListener('push', event => {
   const title = data.title || 'Les Délices de CANA';
   const options = {
     body: data.body || 'Nouvelle information du restaurant.',
-    icon: '/logo.svg',
-    badge: '/logo.svg',
+    icon: '/brand/cana-logo.svg',
+    badge: '/brand/cana-logo.svg',
     tag: data.tag || 'cana-notification',
     renotify: true,
     data: { url: data.url || '/' }
