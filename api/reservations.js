@@ -48,7 +48,7 @@ export default async function handler(request) {
         status: 'pending', created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       };
       await writeJson('reservations/' + id + '.json', reservation);
-      notifyAdmin(reservation).catch(error => console.error('Notification failed', error));
+      try { await notifyAdmin(reservation); } catch (error) { console.error('Notification failed', error); }
       return Response.json({ reservation: { id, status: reservation.status } }, { status: 201 });
     }
 
