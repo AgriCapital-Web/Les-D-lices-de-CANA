@@ -104,3 +104,51 @@ $$;
 
 grant execute on function public.create_public_reservation(text,text,date,time,integer,text,uuid) to anon,authenticated;
 grant execute on function public.get_public_reservations(text) to anon,authenticated;
+
+create table if not exists public.staff (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  role text not null default 'staff' check (role in ('admin','manager','staff')),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.staff enable row level security;
+create policy "staff can read own profile" on public.staff for select to authenticated using (user_id=auth.uid() and active=true);
+
+create or replace function public.is_staff()
+returns boolean language sql stable security definer set search_path=public
+as $$ select exists(select 1 from staff where user_id=auth.uid() and active=true); $$;
+
+create policy "staff read customers" on public.customers for select to authenticated using (public.is_staff());
+create policy "staff manage dishes" on public.dishes for all to authenticated using (public.is_staff()) with check (public.is_staff());
+create policy "staff manage menus" on public.menus for all to authenticated using (public.is_staff()) with check (public.is_staff());
+create policy "staff manage menu items" on public.menu_items for all to authenticated using (public.is_staff()) with check (public.is_staff());
+create policy "staff read reservations" on public.reservations for select to authenticated using (public.is_staff());
+create policy "staff update reservations" on public.reservations for update to authenticated using (public.is_staff()) with check (public.is_staff());
+
+create or replace function public.cancel_public_reservation(p_reservation_id uuid,p_phone text)
+returns boolean language plpgsql security definer set search_path=public
+as $$
+declare changed integer;
+begin
+  update reservations r set status='cancelled',updated_at=now()
+  from customers c
+  where r.id=p_reservation_id and r.customer_id=c.id and c.phone=trim(p_phone)
+    and r.status in ('pending','confirmed');
+  get diagnostics changed = row_count;
+  return changed=1;
+end $$;
+grant execute on function public.cancel_public_reservation(uuid,text) to anon,authenticated;
+
+-- Optional push subscription storage. The server-side sender must use VAPID credentials.
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text,
+  auth text,
+  created_at timestamptz not null default now()
+);
+alter table public.push_subscriptions enable row level security;
+create policy "staff manage own push subscriptions" on public.push_subscriptions for all to authenticated
+using (user_id=auth.uid()) with check (user_id=auth.uid());
