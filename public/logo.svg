@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E8A33A"/><stop offset=".5" stop-color="#B96B20"/><stop offset="1" stop-color="#7A3217"/></linearGradient>
+  </defs>
+  <rect width="800" height="800" rx="170" fill="#2B170F"/>
+  <g fill="none" stroke="url(#g)" stroke-linecap="round">
+    <path d="M170 345 Q400 270 630 345 Q400 385 170 345Z" fill="#C97822" stroke-width="9"/>
+    <path d="M260 318 Q275 225 400 210 Q525 225 540 318" fill="#7D3A19" stroke-width="11"/>
+    <ellipse cx="400" cy="202" rx="48" ry="16" fill="#E8A33A" stroke-width="9"/>
+    <path d="M420 172 C390 130 450 115 450 65 C500 120 505 165 465 195" stroke-width="14"/>
+  </g>
+  <text x="400" y="430" text-anchor="middle" fill="#F4EBDD" font-family="Georgia,serif" font-size="62">Les Délices de</text>
+  <text x="400" y="555" text-anchor="middle" fill="url(#g)" font-family="Georgia,serif" font-weight="700" font-size="150" letter-spacing="8">CANA</text>
+  <path d="M205 590 H315 M485 590 H595" stroke="#D58A2A" stroke-width="5"/>
+  <text x="400" y="625" text-anchor="middle" fill="#E8A33A" font-family="Arial,sans-serif" font-size="32" letter-spacing="13">RESTAURANT</text>
+</svg>
