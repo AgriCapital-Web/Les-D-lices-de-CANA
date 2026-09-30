@@ -94,6 +94,7 @@ drop policy if exists "staff manage menus" on public.menus;
 drop policy if exists "staff manage menu items" on public.menu_items;
 drop policy if exists "staff read reservations" on public.reservations;
 drop policy if exists "staff update reservations" on public.reservations;
+drop policy if exists "staff delete reservations" on public.reservations;
 drop policy if exists "staff can read own profile" on public.staff;
 drop policy if exists "staff manage own push subscriptions" on public.push_subscriptions;
 
@@ -110,6 +111,7 @@ create policy "staff manage menus" on public.menus for all to authenticated usin
 create policy "staff manage menu items" on public.menu_items for all to authenticated using(public.is_staff()) with check(public.is_staff());
 create policy "staff read reservations" on public.reservations for select to authenticated using(public.is_staff());
 create policy "staff update reservations" on public.reservations for update to authenticated using(public.is_staff()) with check(public.is_staff());
+create policy "staff delete reservations" on public.reservations for delete to authenticated using(public.is_staff());
 create policy "staff can read own profile" on public.staff for select to authenticated using(user_id=auth.uid() and active=true);
 create policy "staff manage own push subscriptions" on public.push_subscriptions for all to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
 
