@@ -30,19 +30,19 @@ const money=v=>new Intl.NumberFormat('fr-FR').format(Number(v)||0)+' FCFA';
 const todayISO=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Abidjan'});
 const imageFor=item=>item?.image_url||DISH_IMAGES[item?.name]||FALLBACK_IMAGE;
 const urlBase64ToUint8Array=v=>{const pad='='.repeat((4-v.length%4)%4),b=atob((v+pad).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))};
+async function registerPush(phone=''){
+ try{const vapid=import.meta.env.VITE_VAPID_PUBLIC_KEY;if(!vapid||!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)||!supabase)return;
+  const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();if(permission!=='granted')return;
+  const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(vapid)});
+  const json=sub.toJSON();await supabase.rpc('register_public_push_subscription',{p_phone:phone||null,p_endpoint:sub.endpoint,p_p256dh:json.keys?.p256dh||'',p_auth:json.keys?.auth||''});
+ }catch{}
+}
 
 function SafeImage({src,alt,className='',fallback=FALLBACK_IMAGE}){const [failed,setFailed]=useState(false);return <img className={className} src={failed?fallback:src||fallback} alt={alt||''} onError={()=>setFailed(true)} loading="lazy"/>;}
 
 function ClientApp(){
  const [items,setItems]=useState(DEMO),[category,setCategory]=useState('Tous'),[selected,setSelected]=useState(null),[reservationOpen,setReservationOpen]=useState(false),[customOpen,setCustomOpen]=useState(false),[lookup,setLookup]=useState(false),[phone,setPhone]=useState(''),[history,setHistory]=useState(null),[status,setStatus]=useState('');
  useEffect(()=>{loadMenu()},[]);
- async function registerPush(phone=''){
-  try{const vapid=import.meta.env.VITE_VAPID_PUBLIC_KEY;if(!vapid||!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))return;
-   const permission=Notification.permission==='granted'? 'granted':await Notification.requestPermission(); if(permission!=='granted')return;
-   const reg=await navigator.serviceWorker.ready; let sub=await reg.pushManager.getSubscription(); if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(vapid)});
-   const json=sub.toJSON(); await supabase.rpc('register_public_push_subscription',{p_phone:phone||null,p_endpoint:sub.endpoint,p_p256dh:json.keys?.p256dh||'',p_auth:json.keys?.auth||''});
-  }catch{}
- }
  async function loadMenu(){
   if(!supabase)return;
   const {data}=await supabase.from('menu_items').select('id,dish_id,name,description,price,image_url,category,position,menus!inner(service_date,publish_at,status)').eq('menus.service_date',todayISO()).in('menus.status',['scheduled','published']).lte('menus.publish_at',new Date().toISOString()).order('position');
