@@ -1,0 +1,9 @@
+{
+  "project_id":"icy-king-83075423",
+  "branch_id":"br-orange-paper-b54ypdks",
+  "branch_name":"production",
+  "database":"neondb",
+  "data_api_url":"https://ep-dark-poetry-b5z0bgxk.apirest.c-7.us-east-2.aws.neon.tech/neondb/rest/v1",
+  "push_function":"canapush",
+  "push_schedule":"* * * * *"
+}
