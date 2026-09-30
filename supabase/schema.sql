@@ -188,3 +188,116 @@ row_number() over(partition by m.id order by d.name)::int
 from public.menus m cross join public.dishes d
 where m.service_date=current_date
 and not exists(select 1 from public.menu_items mi where mi.menu_id=m.id and mi.dish_id=d.id);
+
+
+-- CANA reservation requests, push subscriptions and de-duplicated notification events.
+alter table public.reservations add column if not exists request_type text not null default 'dish'
+  check(request_type in('dish','custom'));
+alter table public.reservations drop constraint if exists reservations_notes_length;
+alter table public.reservations add constraint reservations_notes_length check(char_length(coalesce(notes,''))<=350);
+
+alter table public.push_subscriptions add column if not exists phone text;
+alter table public.push_subscriptions add column if not exists last_seen_at timestamptz not null default now();
+
+create unique index if not exists push_subscriptions_user_endpoint_idx
+  on public.push_subscriptions(user_id,endpoint) where user_id is not null;
+create index if not exists push_subscriptions_phone_idx on public.push_subscriptions(phone) where phone is not null;
+
+create table if not exists public.notification_events(
+ id uuid primary key default gen_random_uuid(),
+ event_key text not null unique,
+ recipient_type text not null check(recipient_type in('admin','customer')),
+ customer_phone text,
+ title text not null,
+ body text not null,
+ url text not null default '/',
+ status text not null default 'pending' check(status in('pending','processing','sent','failed')),
+ created_at timestamptz not null default now(),
+ processed_at timestamptz
+);
+alter table public.notification_events enable row level security;
+drop policy if exists "staff read notification events" on public.notification_events;
+create policy "staff read notification events" on public.notification_events for select to authenticated using(public.is_staff());
+
+create or replace function public.create_public_custom_request(
+ p_full_name text,p_phone text,p_request_text text
+) returns uuid language plpgsql security definer set search_path=public as $$
+declare c_id uuid;r_id uuid;
+begin
+ if length(trim(coalesce(p_full_name,'')))<2 then raise exception 'Nom invalide'; end if;
+ if length(regexp_replace(coalesce(p_phone,''),'\D','','g'))<8 then raise exception 'Numéro de téléphone invalide'; end if;
+ if length(trim(coalesce(p_request_text,'')))<1 or length(trim(p_request_text))>350 then raise exception 'La demande doit contenir entre 1 et 350 caractères'; end if;
+ insert into customers(full_name,phone) values(trim(p_full_name),trim(p_phone))
+ on conflict(phone) do update set full_name=excluded.full_name,updated_at=now()
+ returning id into c_id;
+ insert into reservations(customer_id,reservation_date,reservation_time,dish_count,dish_id,notes,request_type)
+ values(c_id,current_date,current_time::time,1,null,trim(p_request_text),'custom')
+ returning id into r_id;
+ return r_id;
+end $$;
+grant execute on function public.create_public_custom_request(text,text,text) to anon,authenticated;
+
+create or replace function public.register_public_push_subscription(
+ p_phone text,p_endpoint text,p_p256dh text,p_auth text
+) returns uuid language plpgsql security definer set search_path=public as $$
+declare sid uuid; normalized_phone text;
+begin
+ if auth.uid() is null and length(regexp_replace(coalesce(p_phone,''),'\D','','g'))<8 then
+   raise exception 'Numéro requis pour activer les notifications client';
+ end if;
+ normalized_phone=nullif(trim(p_phone),'');
+ insert into public.push_subscriptions(user_id,phone,endpoint,p256dh,auth,last_seen_at)
+ values(auth.uid(),normalized_phone,p_endpoint,p_p256dh,p_auth,now())
+ on conflict(endpoint) do update set
+   user_id=coalesce(excluded.user_id,push_subscriptions.user_id),
+   phone=coalesce(excluded.phone,push_subscriptions.phone),
+   p256dh=excluded.p256dh,auth=excluded.auth,last_seen_at=now()
+ returning id into sid;
+ return sid;
+end $$;
+grant execute on function public.register_public_push_subscription(text,text,text,text) to anon,authenticated;
+
+create or replace function public.unregister_public_push_subscription(p_endpoint text)
+returns boolean language plpgsql security definer set search_path=public as $$
+declare n integer;
+begin
+ delete from public.push_subscriptions
+ where endpoint=p_endpoint and (user_id=auth.uid() or (auth.uid() is null and user_id is null));
+ get diagnostics n=row_count;
+ return n=1;
+end $$;
+grant execute on function public.unregister_public_push_subscription(text) to anon,authenticated;
+
+create or replace function public.enqueue_reservation_notifications()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare customer_phone text; dish_label text; title text; body text;
+begin
+ select c.phone into customer_phone from public.customers c where c.id=new.customer_id;
+ select d.name into dish_label from public.dishes d where d.id=new.dish_id;
+ if tg_op='INSERT' then
+   title='Nouvelle réservation';
+   body=case when new.request_type='custom'
+     then 'Nouvelle demande personnalisée de '||coalesce((select c.full_name from customers c where c.id=new.customer_id),'un client')||'.'
+     else 'Nouvelle réservation'||case when dish_label is not null then ' : '||dish_label else '' end||'.' end;
+   insert into notification_events(event_key,recipient_type,title,body,url)
+   values('reservation:'||new.id||':created:admin','admin',title,body,'/me')
+   on conflict(event_key) do nothing;
+ elsif tg_op='UPDATE' and new.status is distinct from old.status and new.status='confirmed' then
+   title='Réservation confirmée';
+   body=case when new.request_type='custom' then 'Votre demande personnalisée a été confirmée par le restaurant.'
+        else 'Votre réservation'||case when dish_label is not null then ' pour '||dish_label else '' end||' a été confirmée.' end;
+   insert into notification_events(event_key,recipient_type,customer_phone,title,body,url)
+   values('reservation:'||new.id||':confirmed:customer','customer',customer_phone,title,body,'/')
+   on conflict(event_key) do nothing;
+ elsif tg_op='UPDATE' and new.status is distinct from old.status and new.status='cancelled' then
+   insert into notification_events(event_key,recipient_type,customer_phone,title,body,url)
+   values('reservation:'||new.id||':cancelled:customer','customer',customer_phone,'Réservation annulée','Votre réservation a été annulée.','/')
+   on conflict(event_key) do nothing;
+ end if;
+ return new;
+end $$;
+
+drop trigger if exists reservations_notification_trigger on public.reservations;
+create trigger reservations_notification_trigger
+after insert or update of status on public.reservations
+for each row execute function public.enqueue_reservation_notifications();
