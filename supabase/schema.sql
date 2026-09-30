@@ -303,3 +303,12 @@ drop trigger if exists reservations_notification_trigger on public.reservations;
 create trigger reservations_notification_trigger
 after insert or update of status on public.reservations
 for each row execute function public.enqueue_reservation_notifications();
+
+-- Super-admin role. The Auth account is provisioned separately; this safely links it when present.
+alter table public.staff drop constraint if exists staff_role_check;
+alter table public.staff add constraint staff_role_check check(role in('super_admin','admin','manager','staff'));
+insert into public.staff(user_id,full_name,role,active)
+select id,'Super Admin CANA','super_admin',true
+from auth.users
+where email='0748141362@cana.local'
+on conflict(user_id) do update set full_name=excluded.full_name,role='super_admin',active=true;
