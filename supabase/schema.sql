@@ -41,13 +41,20 @@ create table if not exists public.reservations(
  customer_id uuid not null references public.customers(id),
  reservation_date date not null,
  reservation_time time not null,
- guests integer not null default 1 check(guests between 1 and 50),
+ dish_count integer not null default 1 check(dish_count between 1 and 50),
  dish_id uuid references public.dishes(id) on delete set null,
  notes text,
  status text not null default 'pending' check(status in('pending','confirmed','arrived','completed','cancelled','no_show')),
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now()
 );
+do $ begin
+ if exists(select 1 from information_schema.columns where table_schema='public' and table_name='reservations' and column_name='guests')
+    and not exists(select 1 from information_schema.columns where table_schema='public' and table_name='reservations' and column_name='dish_count') then
+   alter table public.reservations rename column guests to dish_count;
+ end if;
+end $;
+
 create table if not exists public.staff(
  user_id uuid primary key references auth.users(id) on delete cascade,
  full_name text,
@@ -108,7 +115,7 @@ create policy "staff manage own push subscriptions" on public.push_subscriptions
 
 create or replace function public.create_public_reservation(
  p_full_name text,p_phone text,p_reservation_date date,p_reservation_time time,
- p_guests integer,p_notes text default null,p_dish_id uuid default null
+ p_dish_count integer,p_notes text default null,p_dish_id uuid default null
 ) returns uuid language plpgsql security definer set search_path=public as $$
 declare c_id uuid;r_id uuid;
 begin
@@ -118,15 +125,15 @@ begin
  insert into customers(full_name,phone) values(trim(p_full_name),trim(p_phone))
  on conflict(phone) do update set full_name=excluded.full_name,updated_at=now()
  returning id into c_id;
- insert into reservations(customer_id,reservation_date,reservation_time,guests,notes,dish_id)
- values(c_id,p_reservation_date,p_reservation_time,p_guests,nullif(trim(p_notes),''),p_dish_id)
+ insert into reservations(customer_id,reservation_date,reservation_time,dish_count,notes,dish_id)
+ values(c_id,p_reservation_date,p_reservation_time,p_dish_count,nullif(trim(p_notes),''),p_dish_id)
  returning id into r_id;
  return r_id;
 end $$;
 create or replace function public.get_public_reservations(p_phone text)
-returns table(id uuid,reservation_date date,reservation_time time,guests integer,status text,dish_name text)
+returns table(id uuid,reservation_date date,reservation_time time,dish_count integer,status text,dish_name text)
 language sql security definer set search_path=public as $$
- select r.id,r.reservation_date,r.reservation_time,r.guests,r.status,d.name
+ select r.id,r.reservation_date,r.reservation_time,r.dish_count,r.status,d.name
  from reservations r join customers c on c.id=r.customer_id left join dishes d on d.id=r.dish_id
  where c.phone=trim(p_phone) order by r.reservation_date desc,r.reservation_time desc limit 50;
 $$;
