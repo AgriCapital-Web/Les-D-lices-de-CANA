@@ -29,12 +29,20 @@ const CATS=['Tous','Plats','Spécialités','Boissons'];
 const money=v=>new Intl.NumberFormat('fr-FR').format(Number(v)||0)+' FCFA';
 const todayISO=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Abidjan'});
 const imageFor=item=>item?.image_url||DISH_IMAGES[item?.name]||FALLBACK_IMAGE;
+const urlBase64ToUint8Array=v=>{const pad='='.repeat((4-v.length%4)%4),b=atob((v+pad).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))};
 
 function SafeImage({src,alt,className='',fallback=FALLBACK_IMAGE}){const [failed,setFailed]=useState(false);return <img className={className} src={failed?fallback:src||fallback} alt={alt||''} onError={()=>setFailed(true)} loading="lazy"/>;}
 
 function ClientApp(){
  const [items,setItems]=useState(DEMO),[category,setCategory]=useState('Tous'),[selected,setSelected]=useState(null),[reservationOpen,setReservationOpen]=useState(false),[customOpen,setCustomOpen]=useState(false),[lookup,setLookup]=useState(false),[phone,setPhone]=useState(''),[history,setHistory]=useState(null),[status,setStatus]=useState('');
  useEffect(()=>{loadMenu()},[]);
+ async function registerPush(phone=''){
+  try{const vapid=import.meta.env.VITE_VAPID_PUBLIC_KEY;if(!vapid||!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))return;
+   const permission=Notification.permission==='granted'? 'granted':await Notification.requestPermission(); if(permission!=='granted')return;
+   const reg=await navigator.serviceWorker.ready; let sub=await reg.pushManager.getSubscription(); if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(vapid)});
+   const json=sub.toJSON(); await supabase.rpc('register_public_push_subscription',{p_phone:phone||null,p_endpoint:sub.endpoint,p_p256dh:json.keys?.p256dh||'',p_auth:json.keys?.auth||''});
+  }catch{}
+ }
  async function loadMenu(){
   if(!supabase)return;
   const {data}=await supabase.from('menu_items').select('id,dish_id,name,description,price,image_url,category,position,menus!inner(service_date,publish_at,status)').eq('menus.service_date',todayISO()).in('menus.status',['scheduled','published']).lte('menus.publish_at',new Date().toISOString()).order('position');
@@ -49,14 +57,14 @@ function ClientApp(){
   if(!supabase){setStatus('Le service de réservation est momentanément indisponible.');return;}
   const {error}=await supabase.rpc('create_public_reservation',{p_full_name:p.full_name,p_phone:p.phone,p_reservation_date:p.reservation_date,p_reservation_time:p.reservation_time||'12:00',p_dish_count:p.dish_count,p_notes:p.notes||null,p_dish_id:p.dish_id||null});
   if(error){setStatus(error.message);return;}
-  setStatus('success');e.currentTarget.reset();
+  setStatus('success');e.currentTarget.reset();registerPush(p.phone);
  }
  async function customRequest(e){
   e.preventDefault();setStatus('');
   if(!supabase){setStatus('Le service est momentanément indisponible.');return;}
   const fd=new FormData(e.currentTarget);
   const {error}=await supabase.rpc('create_public_custom_request',{p_full_name:fd.get('full_name'),p_phone:fd.get('phone'),p_request_text:fd.get('request_text')});
-  if(error){setStatus(error.message);return;} setStatus('success');e.currentTarget.reset();
+  if(error){setStatus(error.message);return;} setStatus('success');e.currentTarget.reset();registerPush(fd.get('phone'));
  }
  async function find(e){
   e.preventDefault();setStatus('');
@@ -105,7 +113,7 @@ function ClientApp(){
 function AdminApp(){
  const [session,setSession]=useState(null),[tab,setTab]=useState('reservations'),[reservations,setReservations]=useState([]),[menus,setMenus]=useState([]),[dishes,setDishes]=useState([]),[message,setMessage]=useState(''),[menuForm,setMenuForm]=useState({date:todayISO(),time:'06:00',title:'Menu du jour'}),[dish,setDish]=useState({name:'',description:'',price:'',category:'Plats',image_url:''}),[editing,setEditing]=useState(null),[login,setLogin]=useState({email:'',password:''});
  useEffect(()=>{if(!supabase)return;supabase.auth.getSession().then(({data})=>{setSession(data.session);if(data.session)refresh()});const {data:{subscription}}=supabase.auth.onAuthStateChange((_e,s)=>{setSession(s);if(s)refresh()});return()=>subscription.unsubscribe()},[]);
- async function signIn(e){e.preventDefault();const phone=String(login.phone||'').replace(/\D/g,'');const email=`${phone}@cana.local`;const {data,error}=await supabase.auth.signInWithPassword({email,password:login.password});if(error)setMessage(error.message);else setSession(data.session);}
+ async function signIn(e){e.preventDefault();const phone=String(login.phone||'').replace(/\D/g,'');const email=`${phone}@cana.local`;const {data,error}=await supabase.auth.signInWithPassword({email,password:login.password});if(error)setMessage(error.message);else {setSession(data.session);registerPush();}}
  async function updateReservation(id,status){const {error}=await supabase.from('reservations').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error)setMessage(error.message);else{setMessage(status==='confirmed'?'Réservation validée.':'Réservation terminée.');refresh();}}
  async function refresh(){const [r,m,d]=await Promise.all([supabase.from('reservations').select('id,reservation_date,reservation_time,dish_count,status,notes,customers(full_name,phone),dishes(name)').order('reservation_date',{ascending:false}).order('reservation_time',{ascending:false}).limit(100),supabase.from('menus').select('*,menu_items(id,name,price,image_url,category)').order('service_date',{ascending:false}),supabase.from('dishes').select('*').order('category').order('name')]);setReservations(r.data||[]);setMenus(m.data||[]);setDishes(d.data||[]);}
  async function saveDish(e){e.preventDefault();let data={...dish,price:Number(dish.price),image_url:dish.image_url||null};let q=editing?supabase.from('dishes').update(data).eq('id',editing):supabase.from('dishes').insert(data);const {error}=await q;if(error)setMessage(error.message);else{setMessage('Plat enregistré.');setDish({name:'',description:'',price:'',category:'Plats',image_url:''});setEditing(null);refresh();}}
