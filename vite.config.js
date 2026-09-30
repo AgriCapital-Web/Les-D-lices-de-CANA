@@ -22,7 +22,7 @@ export default defineConfig({
     start_url:'/',
     scope:'/',
     icons:[
-      {src:'/brand/cana-logo.png',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}
+      {src:'/brand/cana-logo.png',sizes:'any',type:'image/png',purpose:'any maskable'}
     ]
    },
    injectManifest:{globPatterns:['**/*.{js,css,html,svg,png,webp,woff2}']}
