@@ -11,8 +11,8 @@ self.addEventListener('push', event => {
     icon: '/brand/cana-logo.png',
     badge: '/brand/cana-logo.png',
     tag: data.tag || 'cana-notification',
-    renotify: true,
-    data: { url: data.url || '/' }
+    renotify: false,
+    data: { url: data.url || '/', eventKey: data.tag || 'cana-notification' }
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
