@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff7e9"/><stop offset="1" stop-color="#e5c398"/></linearGradient><linearGradient id="food" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d78935"/><stop offset="1" stop-color="#8e3f1b"/></linearGradient></defs>
+<rect width="800" height="520" rx="32" fill="url(#bg)"/>
+<ellipse cx="400" cy="395" rx="250" ry="38" fill="#6b3b20" opacity=".15"/>
+<ellipse cx="400" cy="335" rx="220" ry="105" fill="#fffdf8" stroke="#6b3b20" stroke-width="12"/>
+<ellipse cx="400" cy="322" rx="174" ry="76" fill="#f0d6af"/>
+<path d="M275 315c8-83 73-128 125-75 50-54 118-5 125 75-10 65-59 96-125 96s-115-31-125-96z" fill="url(#food)" stroke="#612d17" stroke-width="10"/>
+<path d="M300 282c35 22 72 22 107 0M292 322c43 25 82 25 130-2M330 355c42 20 74 20 113-2" stroke="#f3bd69" stroke-width="12" stroke-linecap="round" fill="none"/>
+<circle cx="470" cy="280" r="9" fill="#351b12"/>
+<path d="M205 337c-34-10-45-37-28-58 17-20 48-9 55 19M595 337c34-10 45-37 28-58-17-20-48-9-55 19" fill="#c36e2d" stroke="#612d17" stroke-width="9"/>
+<circle cx="130" cy="95" r="46" fill="#fff" opacity=".45"/><circle cx="675" cy="120" r="68" fill="#fff" opacity=".3"/>
+<text x="400" y="475" text-anchor="middle" font-family="Georgia,serif" font-size="28" font-weight="700" fill="#542a16">Les Délices de CANA</text>
+</svg>
