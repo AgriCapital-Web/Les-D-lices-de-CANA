@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {ChevronRight,CheckCircle2,X,UtensilsCrossed,CalendarDays,Save,Trash2,LogOut,RefreshCw} from 'lucide-react';
 import './styles.css';
 
-const API=import.meta.env.VITE_CANA_API_URL||'https://br-orange-paper-b54ypdks-canapush.compute.c-7.us-east-2.aws.neon.tech/';
+const API=import.meta.env.VITE_CANA_API_URL||'/api';
 const FALLBACK_IMAGE='/menu-default.svg';
 const CANA_LOGO='/brand/cana-logo.png';
 const CATS=['Tous','Plats','Spécialités','Boissons'];
