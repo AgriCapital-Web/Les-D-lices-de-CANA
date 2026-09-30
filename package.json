@@ -9,13 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vercel/blob": "^2.6.1",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "vite": "^6.1.0",
     "vite-plugin-pwa": "^0.21.1",
-    "web-push": "^3.6.7"
+    "@supabase/supabase-js": "^2.57.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.4.1"
