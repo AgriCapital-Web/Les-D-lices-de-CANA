@@ -68,3 +68,14 @@ img{max-width:100%}
  .product p{display:block;font-size:.72rem}
  .form-two{grid-template-columns:1fr}
 }
+
+
+/* Admin login: compact and fluid */
+.admin-login{min-height:100svh;display:flex;align-items:center;justify-content:center;padding:18px 16px;overflow:auto}
+.admin-login-inner{width:min(420px,100%);display:flex;flex-direction:column;align-items:center;min-width:0}
+.admin-login-inner>img{position:static;width:min(210px,58vw);height:auto;max-height:90px;object-fit:contain;margin:0 auto 8px}
+.admin-login-inner>.kicker{margin:0 0 6px;text-align:center}
+.admin-login-intro{width:min(390px,100%);margin:0 0 14px;text-align:center;color:#765e4f;font-size:clamp(.84rem,2.8vw,.95rem);line-height:1.45;font-weight:400}
+.admin-login-inner form{width:100%;margin:0;background:#fff;border:1px solid #e4d7c9;border-radius:20px;padding:20px;box-shadow:0 25px 70px #4a2b1b12}
+.admin-login-inner form label{font-weight:700}
+@media(max-width:430px){.admin-login{padding:12px}.admin-login-inner>img{width:min(175px,52vw);margin-bottom:5px}.admin-login-intro{margin-bottom:10px;font-size:.82rem}.admin-login-inner form{padding:16px;border-radius:16px}}
