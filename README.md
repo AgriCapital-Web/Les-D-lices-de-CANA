@@ -3,77 +3,86 @@
 Application web/PWA du restaurant **Les Délices de CANA**.
 
 ## Public
-La partie publique est volontairement simple :
-1. **Hero**
-2. **Catalogue / carte** façon boutique e-commerce
-3. **Réservation**
-4. Suivi de réservation dans une fenêtre privée
 
-Aucune mention technique, aucune section d’administration et aucun lien public vers le back-office.
+La partie publique comprend :
+- le hero et le slogan « Ici, la cuisine a le goût de chez vous. » ;
+- le **MENU DU JOUR** ;
+- les plats avec leurs vraies photos ;
+- la réservation ;
+- l'espace **Mes réservations** depuis le seul bouton du menu principal ;
+- la demande de plat particulier.
+
+L'interface est conçue en responsive fluide : tailles de textes, cartes, images, espacements et grilles s'adaptent automatiquement à la largeur de l'écran.
 
 ## Back-office privé
+
 Le seul chemin d'administration est :
 
 `/me`
 
-Donc, sur le domaine de production :
-
-`https://lesdelicesdecana.online/me`
-
-Le chemin `/admin` n'est pas utilisé par l'application.
-
 Le back-office permet :
-- consulter les réservations ;
+- consulter et traiter les réservations ;
 - programmer les menus par date et heure ;
-- modifier les plats ;
-- créer des plats ;
-- modifier les prix, descriptions et catégories ;
-- remplacer les images ;
-- ajouter/retirer les plats d'un menu ;
+- créer/modifier les plats ;
+- modifier prix, descriptions et catégories ;
+- remplacer les URLs d'images ;
+- ajouter/retirer des plats des menus ;
 - préparer plusieurs menus à l'avance.
 
-## Catalogue
-Le projet contient un catalogue de démonstration pour donner immédiatement un aperçu réaliste.
-
-La base Supabase contient également le seed du catalogue et du menu du jour. Les menus programmés deviennent visibles automatiquement lorsque leur date et leur heure de publication sont atteintes.
-
-Heure de publication par défaut : **06h00 — heure Côte d'Ivoire (UTC)**.
-
-## Images
-Les images de plats sont stockées dans le bucket public Supabase `menu-images`. L'équipe peut charger une nouvelle photo depuis `/me` et l'associer au plat.
-
-## Identité
-Le logo transparent CANA est centralisé dans :
-
-`public/brand/cana-logo.svg`
-
-Il est utilisé pour :
-- en-tête ;
-- hero ;
-- footer ;
-- écran de connexion privé ;
-- PWA ;
-- notifications ;
-- favicon ;
-- Open Graph.
-
-La palette de l'interface reste claire : ivoire, crème, brun, cuivre et or. Aucun fond noir n'est utilisé comme fond de page.
+Les modifications d'un plat sont propagées aux éléments de menu qui utilisent ce plat.
 
 ## Base de données
-Exécuter `supabase/schema.sql` dans le projet Supabase.
 
-Après création du compte Auth de l'équipe, ajouter son UUID dans `public.staff` pour lui donner les droits du back-office.
+Le projet utilise **Neon PostgreSQL** via le Neon Data API.
+
+La base de production du projet CANA est déjà structurée autour de :
+- `dishes` ;
+- `menus` ;
+- `menu_items` ;
+- `customers` ;
+- `reservations` ;
+- `push_subscriptions` ;
+- `admin_users` et sessions d'administration.
+
+Le seed du menu actuel est conservé dans :
+
+`db/seed-menu.sql`
+
+Le menu actuel contient six plats et leurs vraies photos.
+
+## Images des plats
+
+Les six photos du menu actuel proviennent de **Wikimedia Commons** et sont enregistrées directement dans la base via `image_url`. Chaque photo a été vérifiée comme ressource accessible.
+
+L'administration permet de remplacer une image à tout moment.
+
+## Identité visuelle
+
+Le logo CANA est utilisé comme asset principal dans :
+- en-tête ;
+- footer ;
+- écran de connexion privé ;
+- identité PWA ;
+- favicon / Open Graph.
+
+Le fichier de référence du projet est :
+
+`public/brand/cana-logo.png`
+
+Aucun logo textuel de remplacement n'est utilisé dans l'interface.
 
 ## Développement
+
 ```bash
 npm install
 npm run dev
 ```
 
-Variables :
+Variables principales :
 
 ```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_NEON_DATA_API_URL=
 VITE_VAPID_PUBLIC_KEY=
 ```
+
+Le projet n'utilise pas Supabase.
