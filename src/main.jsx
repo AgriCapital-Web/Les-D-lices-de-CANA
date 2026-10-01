@@ -6,7 +6,7 @@ import './styles.css';
 const API=import.meta.env.VITE_CANA_API_URL||'/api';
 const FALLBACK_IMAGE='/menu-default.svg';
 const CANA_LOGO='/brand/cana-logo.png';
-const CATS=['Tous','Plats','Spécialités','Boissons'];
+const CATS=['Tous','Plats','Spécialités'];
 const money=v=>new Intl.NumberFormat('fr-FR').format(Number(v)||0)+' FCFA';
 const todayISO=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Abidjan'});
 const imageFor=item=>item?.image_url||FALLBACK_IMAGE;
