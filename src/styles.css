@@ -99,3 +99,10 @@ img{max-width:100%}
 .lookup form>label input{display:block;width:100% !important;max-width:100% !important;min-width:0;box-sizing:border-box}
 .lookup form>.btn.full{display:flex;width:100% !important;max-width:100%;box-sizing:border-box}
 @media(max-width:430px){.lookup{width:100%;max-width:100%;margin:0}.lookup form>label input{height:48px}.lookup form>.btn.full{min-height:50px}}
+
+
+/* Official CANA logo — preserve the complete transparent asset everywhere */
+.brand,.site footer img,.admin-login-inner>img,.admin aside>img{overflow:visible}
+.admin-login-inner>img{position:static;width:min(210px,58vw);height:105px;max-height:none;object-fit:contain;object-position:center;margin:0 auto 8px;flex:0 0 auto}
+.admin aside>img{height:95px;max-height:none;object-fit:contain;object-position:center}
+@media(max-width:430px){.admin-login-inner>img{width:min(185px,62vw);height:110px;max-height:none;margin-bottom:5px}.admin aside>img{height:55px}}
