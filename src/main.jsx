@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {ChevronRight,CheckCircle2,X,UtensilsCrossed,CalendarDays,Save,Trash2,LogOut,RefreshCw} from 'lucide-react';
 import './styles.css';
 
-const API=import.meta.env.VITE_CANA_API_URL||'/api';
+const API=import.meta.env.VITE_CANA_API_URL||'/api/cana';
 const FALLBACK_IMAGE='/menu-default.svg';
 const CANA_LOGO='/brand/cana-logo.png';
 const CATS=['Tous','Plats','Spécialités'];
@@ -13,7 +13,7 @@ const imageFor=item=>item?.image_url||FALLBACK_IMAGE;
 const sessionKey='cana_admin_session';
 const getSession=()=>localStorage.getItem(sessionKey)||'';
 async function api(action,payload={},session=getSession()){
- const res=await fetch(`${API}/rpc/cana_api`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({p_action:action,p_payload:payload,p_session:session||null})});
+ const res=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({p_action:action,p_payload:payload,p_session:session||null})});
  let data=null;try{data=await res.json()}catch{}
  if(!res.ok){const msg=data?.message||data?.error||data?.hint||`Erreur serveur (${res.status})`;throw new Error(msg)}
  return Array.isArray(data)&&data.length===1?data[0]:data;
