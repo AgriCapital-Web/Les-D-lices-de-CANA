@@ -91,3 +91,11 @@ img{max-width:100%}
 .menu-loading,.menu-error{grid-column:1/-1;padding:30px 16px;text-align:center;border:1px dashed #dfcfbe;border-radius:14px;background:#fffaf4;color:#806958}
 .menu-error button{border:0;background:#3b2117;color:#fff2df;border-radius:8px;padding:8px 12px;margin-left:6px;font-weight:800}
 @media(max-width:430px){.menu-loading,.menu-error{font-size:.86rem;padding:24px 12px}}
+
+
+/* Client lookup — force full-width form controls on mobile */
+.lookup form{display:block;width:100%;max-width:100%;min-width:0}
+.lookup form>label{display:block;width:100%;max-width:100%;min-width:0}
+.lookup form>label input{display:block;width:100% !important;max-width:100% !important;min-width:0;box-sizing:border-box}
+.lookup form>.btn.full{display:flex;width:100% !important;max-width:100%;box-sizing:border-box}
+@media(max-width:430px){.lookup{width:100%;max-width:100%;margin:0}.lookup form>label input{height:48px}.lookup form>.btn.full{min-height:50px}}
